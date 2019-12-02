@@ -8,7 +8,7 @@ router.get('/', async (req, res, next) => {
     // If there is _id, retreive the User instance with that _id and return as JSON.
     const { currentUserId } = req.session;
     if (!currentUserId) {
-        return res.json({ error: 'Not logged in' });
+        return res.status(401).json({ error: 'Not logged in' });
     }
     try {
         const currentUser = await User.findById(currentUserId);
@@ -25,7 +25,7 @@ router.get('/conversations', async (req, res, next) => {
     // Return the conversations as JSON.
     const { currentUserId } = req.session;
     if (!currentUserId) {
-        return res.json({ error: 'Not logged in' });
+        return res.status(401).json({ error: 'Not logged in' });
     }
     try {
         // We need to find all Conversations where the participants array includes a user

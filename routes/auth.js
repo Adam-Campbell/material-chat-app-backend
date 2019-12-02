@@ -2,6 +2,20 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 
+router.get('/check-for-session', async (req, res, next) => {
+    const { currentUserId } = req.session;
+    console.log('check for session was called');
+    try {
+        if (!currentUserId) {
+            return res.json({ hasSession: false });
+        } 
+        const user = await User.findById(currentUserId);
+        res.json({ hasSession: true, user });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post('/sign-in', async (req, res, next) => {
     // Grab username and password from req.body.
     // Verify that the username matches an existing user, else throw error.
@@ -11,18 +25,18 @@ router.post('/sign-in', async (req, res, next) => {
     // message to client.
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.json({ error: 'You must provide a username and password' });
+        return res.status(400).json({ error: 'Username or password missing' });
     }
     try {
         const user = await User.findOne({ username }).select('+password').exec();
         if (!user) {
-            return res.json({ error: 'User not found' });
+            return res.status(401).json({ error: 'User not found' });
         }
         if (!user.authenticate(password)) {
-            return res.json({ error: 'Incorrect password' });
+            return res.status(401).json({ error: 'Incorrect password' });
         }
         req.session.currentUserId = user._id;
-        res.json({ signInSuccess: true });
+        res.json({ signInSuccess: true, user });
     } catch (error) {
         next(error);
     }
@@ -34,13 +48,23 @@ router.post('/sign-up', async (req, res, next) => {
     // Else create user, add users _id to req.session, and send confirmation message to client.
     const { username, password } = req.body; 
     if (!username || !password) {
-        return res.json({ error: 'You must provide a username and password' });
+        return res.status(400).json({ error: 'You must provide a username and password' });
+    }
+    try {
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(401).json({ error: 'Username is taken' });
+        }
+    } catch (error) {
+        next(error);
     }
     try {
         const newUser = await User.create({ username, password });
         const newUserId = newUser._id;
         req.session.currentUserId = newUserId;
-        res.json({ signUpSuccess: true });
+        const newUserObject = newUser.toObject();
+        delete newUserObject.password;
+        res.json({ signUpSuccess: true, user: newUserObject });
     } catch (error) {
         next(error)
     }

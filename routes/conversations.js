@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const Conversation = require('../models/conversation');
+const mongoose = require('mongoose');
 
 router.post('/', async (req, res, next) => {
     // Grab the _id from req.session, if there isn't one then throw an error. 
@@ -12,22 +13,43 @@ router.post('/', async (req, res, next) => {
     const { currentUserId } = req.session;
     const { userId, messageText } = req.body;
     if (!currentUserId) {
-        return res.json({ error: 'Not logged in' });
+        return res.status(401).json({ error: 'Not logged in' });
     } else if (!userId) {
-        return res.json({ error: 'You did not select a user to talk to' });
+        return res.status(400).json({ error: 'You did not select a user to talk to' });
     }
     try {
-        const newConversation = await Conversation.create({
-            participants: [
-                currentUserId,
-                userId
-            ],
-            messages: [{
-                author: currentUserId,
-                body: messageText
-            }]
+
+        // Create the message as a plain object.
+        const message = {
+            author: currentUserId,
+            body: messageText
+        };
+
+        const userObjectId = mongoose.Types.ObjectId(userId);
+        const currentUserObjectId = mongoose.Types.ObjectId(currentUserId);
+
+        // If there is  a conversation whose participants have currentUserId and userId, then grab it,
+        // push the message to it, save it and return saved copy. 
+        const existingConversation = await Conversation.findOne({ 
+            participants: { 
+                $all: [ userObjectId, currentUserObjectId ]  
+            } 
         });
-        res.json({ conversationCreatedSuccess: true, conversation: newConversation });
+        if (existingConversation) {
+            existingConversation.messages.push(message);
+            const savedConversation = await existingConversation.save();
+            res.json({ conversation: savedConversation });
+        } else {
+            // If not, then create it as below:
+            const newConversation = await Conversation.create({
+                participants: [
+                    currentUserId,
+                    userId
+                ],
+                messages: [ message ]
+            });
+            res.json({ conversation: newConversation });
+        }
     } catch (error) {
         next(error);
     }
@@ -42,7 +64,7 @@ router.route('/:conversationId')
         const { conversationId } = req.params;
         const { currentUserId } = req.session;
         if (!currentUserId) {
-            return res.json({ error: 'Not logged in' });
+            return res.status(401).json({ error: 'Not logged in' });
         }
         try {
             const conversation = await Conversation.findById(conversationId)
@@ -51,7 +73,7 @@ router.route('/:conversationId')
             if (conversation.participants.find(user => user._id.equals(currentUserId) )) {
                 res.json({ conversation });
             } else {
-                res.json({ error: 'You are not authorised to access this conversation' });
+                res.status(401).json({ error: 'You are not authorised to access this conversation' });
             }
         } catch (error) {
             next(error);
@@ -69,9 +91,9 @@ router.route('/:conversationId')
         const { currentUserId } = req.session;
         const { text } = req.body;
         if (!currentUserId) {
-            return res.json({ error: 'Not logged in' });
+            return res.status(401).json({ error: 'Not logged in' });
         } else if (!text) {
-            return res.json({ error: 'No message text supplied' });
+            return res.status(400).json({ error: 'No message text supplied' });
         }
         try {
             const conversation = await Conversation.findById(conversationId)
@@ -86,7 +108,7 @@ router.route('/:conversationId')
                 const savedConversation = await conversation.save();
                 res.json({ conversation: savedConversation });
             } else {
-                res.json({ error: 'You are not authorised to access this conversation' });
+                res.status(401).json({ error: 'You are not authorised to access this conversation' });
             }
         } catch (error) {
             next(error);
