@@ -6,6 +6,10 @@ const getConversation = async (socket, conversationId) => {
         const currentUserId = socket.decoded_token._id;
         const conversation = await Conversation.findById(conversationId)
             .populate('participants')
+            .populate({
+                path: 'messages.author',
+                model: 'user'
+            })
             .exec();
         if (conversation.participants.find(user => user._id.equals(currentUserId) )) {
             socket.emit(actions.getConversationResponse, { conversation })

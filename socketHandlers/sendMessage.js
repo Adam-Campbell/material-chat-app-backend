@@ -10,6 +10,10 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
         }
         const conversation = await Conversation.findById(conversationId)
             .populate('participants')
+            .populate({
+                path: 'messages.author',
+                model: 'user'
+            })
             .exec();
         if (conversation.participants.find(user => user._id.equals(currentUserId))) {
             conversation.messages.push({
@@ -17,8 +21,15 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
                 body: messageText
             });
             const savedConversation = await conversation.save();
-            pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
-            socket.emit(actions.sendMessageResponse, { conversation: savedConversation });
+            const populatedConversation = await savedConversation
+                .populate('participants')
+                .populate({
+                    path: 'messages.author',
+                    model: 'user'
+                })
+                .execPopulate();
+            pushConversationToOtherParticipants(socket, currentUserId, populatedConversation, currentUsers);
+            socket.emit(actions.sendMessageResponse, { conversation: populatedConversation });
         } else {
             socket.emit(
                 actions.sendMessageError, 
