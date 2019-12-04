@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const jwt = require('jsonwebtoken');
+
+const createSocketToken = _id => jwt.sign({ _id }, 'foobar', { expiresIn: 360 });
 
 router.get('/check-for-session', async (req, res, next) => {
     const { currentUserId } = req.session;
@@ -10,7 +13,8 @@ router.get('/check-for-session', async (req, res, next) => {
             return res.json({ hasSession: false });
         } 
         const user = await User.findById(currentUserId);
-        res.json({ hasSession: true, user });
+        const socketToken = createSocketToken(user._id);
+        res.json({ hasSession: true, user, socketToken });
     } catch (error) {
         next(error);
     }
@@ -36,7 +40,9 @@ router.post('/sign-in', async (req, res, next) => {
             return res.status(401).json({ error: 'Incorrect password' });
         }
         req.session.currentUserId = user._id;
-        res.json({ signInSuccess: true, user });
+        //const socketToken = jwt.sign({ _id: user._id }, 'foobar', { expiresIn: 360 })
+        const socketToken = createSocketToken(user._id);
+        res.json({ signInSuccess: true, user, socketToken });
     } catch (error) {
         next(error);
     }
@@ -64,7 +70,8 @@ router.post('/sign-up', async (req, res, next) => {
         req.session.currentUserId = newUserId;
         const newUserObject = newUser.toObject();
         delete newUserObject.password;
-        res.json({ signUpSuccess: true, user: newUserObject });
+        const socketToken = createSocketToken(newUserObject._id);
+        res.json({ signUpSuccess: true, user: newUserObject, socketToken });
     } catch (error) {
         next(error)
     }

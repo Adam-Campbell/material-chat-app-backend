@@ -48,7 +48,8 @@ router.post('/', async (req, res, next) => {
                 ],
                 messages: [ message ]
             });
-            res.json({ conversation: newConversation });
+            const populatedConversation = await newConversation.populate('participants').execPopulate();
+            res.json({ conversation: populatedConversation });
         }
     } catch (error) {
         next(error);
