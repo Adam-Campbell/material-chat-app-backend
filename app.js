@@ -12,8 +12,11 @@ const socketioJwt = require('socketio-jwt');
 const {
     getCurrentUsersConversations,
     getConversation,
-    sendMessage
+    sendMessage,
+    sendConversation,
+    getUsers
 } = require('./socketHandlers');
+const actions = require('./actions');
 
 const port = process.env.PORT || 5000;
 
@@ -54,16 +57,22 @@ io.on('connection', socket => {
         socket.emit('baz', 'This is baz');
     });
 
-    socket.on('getConversations', () => {
+    socket.on(actions.getCurrentUsersConversationsRequest, () => {
         getCurrentUsersConversations(socket);
     });
-    socket.on('getConversation', conversationId => {
+    socket.on(actions.getConversationRequest, conversationId => {
         getConversation(socket, conversationId)
     });
-    socket.on('sendMessage', (conversationId, messageText) => {
+    socket.on(actions.sendMessageRequest, (conversationId, messageText) => {
         sendMessage(socket, conversationId, messageText, currentUsers);
     });
-})
+    socket.on(actions.sendConversationRequest, (userId, messageText) => {
+        sendConversation(socket, userId, messageText, currentUsers);
+    });
+    socket.on(actions.getUsersRequest, query => {
+        getUsers(socket, query);
+    });
+});
 
 mongoose.connect(
     'mongodb://localhost/materialChatApp',
