@@ -8,17 +8,18 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
         if (!messageText) {
             return socket.emit(actions.sendMessageError, { error: 'You must supply a message' });
         }
-        const conversation = await Conversation.findById(conversationId)
-            .populate('participants')
-            .exec();
-        if (conversation.participants.find(user => user._id.equals(currentUserId))) {
+        const conversation = await Conversation.findById(conversationId);
+        
+        if (conversation.participants.find(userId => userId.equals(currentUserId))) {
             conversation.messages.push({
                 author: currentUserId,
                 body: messageText
             });
-            const savedConversation = await conversation.save();
+
+            const savedConversation = await conversation.save().then(c => c.fullPopulate());
             pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
             socket.emit(actions.sendMessageResponse, { conversation: savedConversation });
+
         } else {
             socket.emit(
                 actions.sendMessageError, 

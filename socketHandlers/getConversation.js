@@ -5,8 +5,7 @@ const getConversation = async (socket, conversationId) => {
     try {
         const currentUserId = socket.decoded_token._id;
         const conversation = await Conversation.findById(conversationId)
-            .populate('participants')
-            .exec();
+            .then(c => c.fullPopulate());
         if (conversation.participants.find(user => user._id.equals(currentUserId) )) {
             socket.emit(actions.getConversationResponse, { conversation })
         } else {

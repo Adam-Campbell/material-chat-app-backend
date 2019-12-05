@@ -1,5 +1,14 @@
 const actions = require('../actions');
 
+/**
+ * Takes a conversation and pushes it to the clients of each of its participants that are currently
+ * online / connected.
+ * @param {Object} socket - A SocketIO socket instance. 
+ * @param {*} currentUserId  - The _id of the current user as a string
+ * @param {*} conversation - The conversation to be pushed
+ * @param {*} onlineUsers - A dictionary that maps users _ids to socket ids for all currently
+ * connected users.
+ */
 const pushConversationToOtherParticipants = (socket, currentUserId, conversation, onlineUsers) => {
     conversation.participants.filter(user => {
         return !user._id.equals(currentUserId);
@@ -15,4 +24,4 @@ const pushConversationToOtherParticipants = (socket, currentUserId, conversation
 
 module.exports = {
     pushConversationToOtherParticipants
-}
+};
