@@ -8,6 +8,7 @@ const getCurrentUsersConversations = async (socket) => {
         const conversations = await Conversation.find({ participants: currentUserId })
             .populate('participants')
             .select('-messages')
+            .sort({ latestActivity: 'desc' })
             .exec();
         socket.emit(actions.getCurrentUsersConversationsResponse, { conversations });
     } catch (err) {

@@ -11,6 +11,9 @@ const ConversationSchema = new Schema({
     messages: {
         type: [ MessageSchema ],
         required: true
+    },
+    latestActivity: {
+        type: Date
     }
 });
 
@@ -22,5 +25,13 @@ ConversationSchema.methods.fullPopulate = function() {
         })
         .execPopulate();
 }
+
+ConversationSchema.pre('save', function(next) {
+    if (this.messages.length) {
+        const timestamp = this.messages[this.messages.length-1].createdAt;
+        this.latestActivity = timestamp;
+    }
+    next();
+})
 
 module.exports = mongoose.model('conversation', ConversationSchema);
