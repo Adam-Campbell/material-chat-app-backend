@@ -24,9 +24,6 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
             body: messageText
         };
 
-        //const userObjectId = mongoose.Types.ObjectId(userId);
-        //const currentUserObjectId = mongoose.Types.ObjectId(currentUserId);
-
         const userObjectIds = [currentUserId, ...userIds].map(id => mongoose.Types.ObjectId(id));
 
         // If there is  a conversation whose participants have currentUserId and userId, then grab it,
@@ -35,44 +32,23 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
             participants: { 
                 $all: userObjectIds
             } 
-        })
-        .populate('participants')
-        .populate({
-            path: 'messages.author',
-            model: 'user'
-        })
-        .exec();
+        });
+
         if (existingConversation) {
             existingConversation.messages.push(message);
-            const savedConversation = await existingConversation.save();
-            const populatedConversation = await savedConversation
-                .populate('participants')
-                .populate({
-                    path: 'messages.author',
-                    model: 'user'
-                })
-                .execPopulate();
-            pushConversationToOtherParticipants(socket, currentUserId, populatedConversation, currentUsers);
-            socket.emit(actions.sendConversationResponse, { conversation: populatedConversation });
+            const savedConversation = await existingConversation.save().then(c => c.fullPopulate());
+            pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
+            socket.emit(actions.sendConversationResponse, { conversation: savedConversation });
         } else {
+
             // If not, then create it as below:
             const newConversation = await Conversation.create({
-                participants: [
-                    currentUserId,
-                    ...userIds
-                ],
+                participants: [ currentUserId, ...userIds ],
                 messages: [ message ]
-            });
-            //res.json({ conversation: newConversation });
-            const populatedConversation = await newConversation
-                .populate('participants')
-                .populate({
-                    path: 'messages.author',
-                    model: 'user'
-                })
-                .execPopulate();
-            pushConversationToOtherParticipants(socket, currentUserId, populatedConversation, currentUsers);
-            socket.emit(actions.sendConversationResponse, { conversation: populatedConversation });
+            })
+            .then(c => c.fullPopulate());
+            pushConversationToOtherParticipants(socket, currentUserId, newConversation, currentUsers);
+            socket.emit(actions.sendConversationResponse, { conversation: newConversation });
         }
     } catch (err) {
         console.log(err);

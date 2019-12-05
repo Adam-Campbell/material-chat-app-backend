@@ -2,7 +2,9 @@ const User = require('../models/user');
 const actions = require('../actions');
 const mongoose = require('mongoose');
 
-const getUsers = async (socket, query, ) => {
+// Return all users whose usernames contain `query`, except for the current user who will
+// always be excluded from the results.
+const getUsers = async (socket, query) => {
     try {
         const currentUserId = socket.decoded_token._id;
         const currentUserObjectId = mongoose.Types.ObjectId(currentUserId);
