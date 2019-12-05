@@ -20,6 +20,10 @@ module.exports = {
     sendConversationRequest: 'send::conversation::request',
     sendConversationResponse: 'send::conversation::response',
     sendConversationError: 'send::conversation::error',
+    // How the clients can update which messages they have viewed
+    sendConversationViewedAtRequest: 'send::conversationViewedAt::request',
+    sendConversationViewedAtResponse: 'send::conversationViewedAt::response',
+    sendConversationViewedAtError: 'send::conversationViewedAt::error',
     // push actions for each resource that the server pushes to the client without
     // the client requesting it
     pushConversation: 'push::conversation'

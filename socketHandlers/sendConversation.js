@@ -42,9 +42,11 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
         } else {
 
             // If not, then create it as below:
+            const participantsLastViewedObjects = userObjectIds.map(id => ({ user: id }));
             const newConversation = await Conversation.create({
                 participants: [ currentUserId, ...userIds ],
-                messages: [ message ]
+                messages: [ message ],
+                participantsLastViewed: participantsLastViewedObjects
             })
             .then(c => c.fullPopulate());
             pushConversationToOtherParticipants(socket, currentUserId, newConversation, currentUsers);

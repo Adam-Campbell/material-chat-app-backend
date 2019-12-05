@@ -14,7 +14,8 @@ const {
     getConversation,
     sendMessage,
     sendConversation,
-    getUsers
+    getUsers,
+    sendConversationViewedAt
 } = require('./socketHandlers');
 const actions = require('./actions');
 
@@ -71,6 +72,9 @@ io.on('connection', socket => {
     });
     socket.on(actions.getUsersRequest, query => {
         getUsers(socket, query);
+    });
+    socket.on(actions.sendConversationViewedAtRequest, (conversationId, timestamp) => {
+        sendConversationViewedAt(socket, conversationId, timestamp, currentUsers);
     });
 });
 

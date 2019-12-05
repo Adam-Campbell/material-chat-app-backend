@@ -11,11 +11,16 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
         const conversation = await Conversation.findById(conversationId);
         
         if (conversation.participants.find(userId => userId.equals(currentUserId))) {
+            const timestamp = Date.now();
             conversation.messages.push({
                 author: currentUserId,
-                body: messageText
+                body: messageText,
+                createdAt: timestamp
             });
-
+            const plv = conversation.participantsLastViewed.find(p => p.user.equals(currentUserId));
+            if (plv) {
+                plv.lastViewed = timestamp;
+            }
             const savedConversation = await conversation.save().then(c => c.fullPopulate());
             pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
             socket.emit(actions.sendMessageResponse, { conversation: savedConversation });
