@@ -24,7 +24,10 @@ module.exports = {
     sendConversationViewedAtRequest: 'send::conversationViewedAt::request',
     sendConversationViewedAtResponse: 'send::conversationViewedAt::response',
     sendConversationViewedAtError: 'send::conversationViewedAt::error',
+    sendLastViewed: 'send::lastViewed',
     // push actions for each resource that the server pushes to the client without
     // the client requesting it
-    pushConversation: 'push::conversation'
+    pushConversation: 'push::conversation',
+    pushMessage: 'push::message',
+    pushLastViewed: 'push::lastViewed'
 };

@@ -22,6 +22,19 @@ const pushConversationToOtherParticipants = (socket, currentUserId, conversation
     });
 }
 
+const pushEventToParticipants = (socket, participants, eventName, eventData, onlineUsers) => {
+    participants.forEach(participant => {
+        //const idAsString = participant.toString();
+        const idAsString = participant._id ? participant._id.toString() : participant.toString();
+        const socketId = onlineUsers.get(idAsString);
+        if (socketId) {
+            socket.to(socketId).emit(eventName, eventData);
+        }
+    });
+    socket.emit(eventName, eventData);
+}
+
 module.exports = {
-    pushConversationToOtherParticipants
+    pushConversationToOtherParticipants,
+    pushEventToParticipants
 };
