@@ -1,33 +1,53 @@
-module.exports = {
-    // Request response and error actions for each resource that the
-    // application is concerned with
+const resourceFetchingEvents = {
     getCurrentUsersConversationsRequest: 'get::currentUsersConverstations::request',
+        // no args
     getCurrentUsersConversationsResponse: 'get::currentUsersConversations::response',
+        // { conversations }
     getCurrentUsersConversationsError: 'get::currentUsersConversations::error',
+        // { error }
     getConversationRequest: 'get::conversation::request',
+        // { conversationId }
     getConversationResponse: 'get::conversation::response',
+        // { conversation }
     getConversationError: 'get::conversation::error',
+        // { error }
     getUsersRequest: 'get::users::request',
+        // { query }
     getUsersResponse: 'get::users::response',
+        // { users }
     getUsersError: 'get::users::error',
-    getCurrentUserRequest: 'get::currentUser::request',
-    getCurrentUserResponse: 'get::currentUser::response',
-    getCurrentUserError: 'get::currentUser::error',
+        // { error }
+};
+
+const sendToServerEvents = {
     // send actions for each resource that the client sends to the server
-    sendMessageRequest: 'send::message::request',
-    sendMessageResponse: 'send::message::response',
+    sendMessage: 'send::message',
+        // { conversationId, messageText }
     sendMessageError: 'send::message::error',
-    sendConversationRequest: 'send::conversation::request',
-    sendConversationResponse: 'send::conversation::response',
+        // { error }
+    sendConversation: 'send::conversation',
+        // { userIds, messageText }
+    sendConversationSuccess: 'send::conversation::success',
+        // { conversationId }
     sendConversationError: 'send::conversation::error',
-    // How the clients can update which messages they have viewed
-    sendConversationViewedAtRequest: 'send::conversationViewedAt::request',
-    sendConversationViewedAtResponse: 'send::conversationViewedAt::response',
-    sendConversationViewedAtError: 'send::conversationViewedAt::error',
+        // { error }
     sendLastViewed: 'send::lastViewed',
-    // push actions for each resource that the server pushes to the client without
-    // the client requesting it
+        // { conversationId, timestamp }
+    sendLastViewedError: 'send::lastViewed::error',
+        // { error }
+};
+
+const pushToClientEvents = {
     pushConversation: 'push::conversation',
+        // { conversation }
     pushMessage: 'push::message',
+        // { message, conversationId }
     pushLastViewed: 'push::lastViewed'
+        // { lastViewed, conversationId }
+};
+
+module.exports = {
+    ...resourceFetchingEvents,
+    ...sendToServerEvents,
+    ...pushToClientEvents
 };

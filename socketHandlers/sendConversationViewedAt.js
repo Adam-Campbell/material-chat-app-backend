@@ -1,12 +1,6 @@
 const Conversation = require('../models/conversation');
 const actions = require('../actions');
-const { pushConversationToOtherParticipants, pushEventToParticipants } = require('./utils');
-
-/*
-
-Find conversation by id and update
-
-*/
+const { pushEventToParticipants } = require('./utils');
 
 const sendConversationViewedAt = async (socket, conversationId, timestamp, currentUsers) => {
     try {
@@ -16,15 +10,13 @@ const sendConversationViewedAt = async (socket, conversationId, timestamp, curre
         if (plv) {
             plv.lastViewed = timestamp;
             const savedConversation = await conversation.save().then(c => c.fullPopulate());
-            //pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
-            //socket.emit(actions.sendConversationViewedAtResponse, { conversation: savedConversation });
-            pushEventToParticipants(
+            pushEventToParticipants({
                 socket,
-                savedConversation.participants,
-                actions.pushLastViewed,
-                { lastViewed: savedConversation.participantsLastViewed, conversationId },
-                currentUsers
-            );
+                participants: savedConversation.participants,
+                eventName: actions.pushLastViewed,
+                eventData: { lastViewed: savedConversation.participantsLastViewed, conversationId },
+                onlineUsers: currentUsers
+            });
         }
     } catch (err) {
         console.log(err);
@@ -32,20 +24,3 @@ const sendConversationViewedAt = async (socket, conversationId, timestamp, curre
 }
 
 module.exports = sendConversationViewedAt
-
-
-// const sendConversationViewedAt = async (socket, conversationId, timestamp, currentUsers) => {
-//     try {
-//         const currentUserId = socket.decoded_token._id;
-//         const conversation = await Conversation.findById(conversationId);
-//         const plv = conversation.participantsLastViewed.find(p => p.user.equals(currentUserId));
-//         if (plv) {
-//             plv.lastViewed = timestamp;
-//             const savedConversation = await conversation.save().then(c => c.fullPopulate());
-//             pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
-//             socket.emit(actions.sendConversationViewedAtResponse, { conversation: savedConversation });
-//         }
-//     } catch (err) {
-//         console.log(err);
-//     }
-// }

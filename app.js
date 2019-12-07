@@ -44,36 +44,28 @@ io.sockets.on('connection', socketioJwt.authorize({
 
 io.on('connection', socket => {
     console.log('A socket connected');
-    //console.log(socket.id);
-    //console.log(io.sockets);
     
     socket.on('disconnect', () => {
         console.log('A socket disconnected')
         currentUsers.delete(socket.decoded_token._id);
     });
 
-    socket.on('foo', data => {
-        console.log(data);
-        console.log(`From inside foo ${socket.decoded_token._id}`);
-        socket.emit('baz', 'This is baz');
-    });
-
     socket.on(actions.getCurrentUsersConversationsRequest, () => {
         getCurrentUsersConversations(socket);
     });
-    socket.on(actions.getConversationRequest, conversationId => {
+    socket.on(actions.getConversationRequest, ({ conversationId }) => {
         getConversation(socket, conversationId)
     });
-    socket.on(actions.sendMessageRequest, (conversationId, messageText) => {
+    socket.on(actions.sendMessage, ({ conversationId, messageText }) => {
         sendMessage(socket, conversationId, messageText, currentUsers);
     });
-    socket.on(actions.sendConversationRequest, (userId, messageText) => {
-        sendConversation(socket, userId, messageText, currentUsers);
+    socket.on(actions.sendConversation, ({ userIds, messageText }) => {
+        sendConversation(socket, userIds, messageText, currentUsers);
     });
-    socket.on(actions.getUsersRequest, query => {
+    socket.on(actions.getUsersRequest, ({ query }) => {
         getUsers(socket, query);
     });
-    socket.on(actions.sendConversationViewedAtRequest, (conversationId, timestamp) => {
+    socket.on(actions.sendLastViewed, ({ conversationId, timestamp }) => {
         sendConversationViewedAt(socket, conversationId, timestamp, currentUsers);
     });
 });

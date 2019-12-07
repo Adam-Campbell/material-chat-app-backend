@@ -1,40 +1,29 @@
 const actions = require('../actions');
 
 /**
- * Takes a conversation and pushes it to the clients of each of its participants that are currently
- * online / connected.
- * @param {Object} socket - A SocketIO socket instance. 
- * @param {*} currentUserId  - The _id of the current user as a string
- * @param {*} conversation - The conversation to be pushed
- * @param {*} onlineUsers - A dictionary that maps users _ids to socket ids for all currently
+ * Takes an event, with its associated data, and pushes it to a list of recipients. 
+ * @param {Object} socket - A SocketIO socket instance.
+ * @param {Array} participants - the array of participants to push the event to.
+ * @param {String} eventName - the name of the event to push.
+ * @param {*} eventData - the data to send along with the event.
+ * @param {Object} onlineUsers - A Map that maps users _ids to socket ids for all currently
  * connected users.
+ * @param {String} idToExclude - the id of a particular participant from the participants list
+ * to exclude when pushing the event.
  */
-const pushConversationToOtherParticipants = (socket, currentUserId, conversation, onlineUsers) => {
-    conversation.participants.filter(user => {
-        return !user._id.equals(currentUserId);
-    })
-    .forEach(participant => {
-        const idAsString = participant._id.toString();
-        const socketId = onlineUsers.get(idAsString);
-        if (socketId) {
-            socket.to(socketId).emit(actions.pushConversation, { conversation });
-        }
-    });
-}
-
-const pushEventToParticipants = (socket, participants, eventName, eventData, onlineUsers) => {
+const pushEventToParticipants = ({ socket, participants, eventName, eventData, onlineUsers, idToExclude }) => {
     participants.forEach(participant => {
-        //const idAsString = participant.toString();
-        const idAsString = participant._id ? participant._id.toString() : participant.toString();
-        const socketId = onlineUsers.get(idAsString);
-        if (socketId) {
-            socket.to(socketId).emit(eventName, eventData);
+        if (!idToExclude || !participant._id.equals(idToExclude)) {
+            const idAsString = participant._id ? participant._id.toString() : participant.toString();
+            const socketId = onlineUsers.get(idAsString);
+            if (socketId) {
+                socket.to(socketId).emit(eventName, eventData);
+            }
         }
     });
     socket.emit(eventName, eventData);
 }
 
 module.exports = {
-    pushConversationToOtherParticipants,
     pushEventToParticipants
 };
