@@ -1,7 +1,7 @@
 const Conversation = require('../models/conversation');
 const actions = require('../actions');
 const mongoose = require('mongoose');
-const { pushConversationToOtherParticipants } = require('./utils');
+const { pushEventToParticipants } = require('./utils');
 
 const sendConversation = async (socket, userIds, messageText, currentUsers) => {
     try {
@@ -21,7 +21,9 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
         // Create the message as a plain object.
         const message = {
             author: currentUserId,
-            body: messageText
+            body: messageText,
+            _id: mongoose.Types.ObjectId(),
+            createdAt: new Date()
         };
 
         const userObjectIds = [currentUserId, ...userIds].map(id => mongoose.Types.ObjectId(id));
@@ -37,18 +39,34 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
         if (existingConversation) {
             existingConversation.messages.push(message);
             const savedConversation = await existingConversation.save().then(c => c.fullPopulate());
-            pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
-            socket.emit(actions.sendConversationResponse, { conversation: savedConversation });
+            pushEventToParticipants({
+                socket,
+                participants: existingConversation.participants,
+                eventName: actions.pushMessage,
+                eventData: { message, conversationId: savedConversation._id },
+                onlineUsers: currentUsers,
+                idToExclude: currentUserId
+            });
+            socket.emit(actions.sendConversationSuccess, { conversationId: savedConversation._id });
         } else {
 
             // If not, then create it as below:
+            const participantsLastViewedObjects = userObjectIds.map(id => ({ user: id }));
             const newConversation = await Conversation.create({
                 participants: [ currentUserId, ...userIds ],
-                messages: [ message ]
+                messages: [ message ],
+                participantsLastViewed: participantsLastViewedObjects
             })
             .then(c => c.fullPopulate());
-            pushConversationToOtherParticipants(socket, currentUserId, newConversation, currentUsers);
-            socket.emit(actions.sendConversationResponse, { conversation: newConversation });
+            pushEventToParticipants({
+                socket, 
+                participants: newConversation.participants, 
+                eventName: actions.pushConversation,
+                eventData: { conversation: newConversation },
+                onlineUsers: currentUsers,
+                idToExclude: currentUserId
+            });
+            socket.emit(actions.sendConversationSuccess, { conversationId: newConversation._id });
         }
     } catch (err) {
         console.log(err);

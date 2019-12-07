@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const MessageSchema = require('./message');
+const ParticipantLastViewedSchema = require('./participantLastViewed');
 
 const ConversationSchema = new Schema({
     participants: [{
@@ -8,6 +9,10 @@ const ConversationSchema = new Schema({
         ref: 'user',
         required: true,
     }],
+    participantsLastViewed: {
+        type: [ ParticipantLastViewedSchema ],
+        required: true 
+    },
     messages: {
         type: [ MessageSchema ],
         required: true
@@ -23,6 +28,10 @@ ConversationSchema.methods.fullPopulate = function() {
             path: 'messages.author',
             model: 'user'
         })
+        .populate({
+            path: 'participantsLastViewed.user',
+            model: 'user'
+        })
         .execPopulate();
 }
 
@@ -32,6 +41,6 @@ ConversationSchema.pre('save', function(next) {
         this.latestActivity = timestamp;
     }
     next();
-})
+});
 
 module.exports = mongoose.model('conversation', ConversationSchema);

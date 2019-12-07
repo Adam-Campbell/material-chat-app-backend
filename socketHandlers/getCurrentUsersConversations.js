@@ -7,6 +7,10 @@ const getCurrentUsersConversations = async (socket) => {
         const currentUserId = socket.decoded_token._id;
         const conversations = await Conversation.find({ participants: currentUserId })
             .populate('participants')
+            .populate({
+                path: 'participantsLastViewed.user',
+                model: 'user'
+            })
             .select('-messages')
             .sort({ latestActivity: 'desc' })
             .exec();

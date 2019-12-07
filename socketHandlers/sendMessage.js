@@ -1,6 +1,8 @@
 const Conversation = require('../models/conversation');
+const User = require('../models/user');
 const actions = require('../actions');
-const { pushConversationToOtherParticipants } = require('./utils');
+const { pushEventToParticipants } = require('./utils');
+const mongoose = require('mongoose');
 
 const sendMessage = async (socket, conversationId, messageText, currentUsers) => {
     try {
@@ -11,14 +13,28 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
         const conversation = await Conversation.findById(conversationId);
         
         if (conversation.participants.find(userId => userId.equals(currentUserId))) {
-            conversation.messages.push({
+            const newMessage = conversation.messages.create({
                 author: currentUserId,
                 body: messageText
             });
-
-            const savedConversation = await conversation.save().then(c => c.fullPopulate());
-            pushConversationToOtherParticipants(socket, currentUserId, savedConversation, currentUsers);
-            socket.emit(actions.sendMessageResponse, { conversation: savedConversation });
+            conversation.messages.push(newMessage);
+            const messageAsObject = newMessage.toObject();
+            const username = await User.findById(currentUserId).then(user => user.username);
+            const populatedMessage = {
+                ...messageAsObject,
+                author: {
+                    _id: messageAsObject.author,
+                    username
+                }
+            };
+            await conversation.save();
+            pushEventToParticipants({
+                socket, 
+                participants: conversation.participants, 
+                eventName: actions.pushMessage,
+                eventData: { message: populatedMessage, conversationId },
+                onlineUsers: currentUsers
+            });
 
         } else {
             socket.emit(
