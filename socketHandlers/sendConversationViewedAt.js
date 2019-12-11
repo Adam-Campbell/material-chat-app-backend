@@ -14,7 +14,8 @@ const sendConversationViewedAt = async (socket, conversationId, timestamp, curre
                 socket,
                 participants: savedConversation.participants,
                 eventName: actions.pushLastViewed,
-                eventData: { lastViewed: savedConversation.participantsLastViewed, conversationId },
+                //eventData: { lastViewed: savedConversation.participantsLastViewed, conversationId },
+                eventData: { timestamp, userId: currentUserId, conversationId },
                 onlineUsers: currentUsers
             });
         }

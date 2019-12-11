@@ -43,7 +43,7 @@ const pushToClientEvents = {
     pushMessage: 'push::message',
         // { message, conversationId }
     pushLastViewed: 'push::lastViewed'
-        // { lastViewed, conversationId }
+        // { timestamp, userId, conversationId }
 };
 
 module.exports = {
