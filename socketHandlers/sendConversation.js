@@ -28,14 +28,15 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
 
         const userObjectIds = [currentUserId, ...userIds].map(id => mongoose.Types.ObjectId(id));
 
-        // If there is  a conversation whose participants have currentUserId and userId, then grab it,
-        // push the message to it, save it and return saved copy. 
+        // Check if there is a conversation containing all of the desired users, and only them. 
         const existingConversation = await Conversation.findOne({ 
             participants: { 
-                $all: userObjectIds
+                $all: userObjectIds,
+                $size: userObjectIds.length
             } 
         });
 
+        // If conversation found, push message to it, save, and emit event to notify clients.
         if (existingConversation) {
             existingConversation.messages.push(message);
             const savedConversation = await existingConversation.save().then(c => c.fullPopulate());
@@ -50,7 +51,7 @@ const sendConversation = async (socket, userIds, messageText, currentUsers) => {
             socket.emit(actions.sendConversationSuccess, { conversationId: savedConversation._id });
         } else {
 
-            // If not, then create it as below:
+            // If not, then create it with the message, and emit event. 
             const participantsLastViewedObjects = userObjectIds.map(id => ({ user: id }));
             const newConversation = await Conversation.create({
                 participants: [ currentUserId, ...userIds ],
