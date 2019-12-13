@@ -44,6 +44,10 @@ const sendMessage = async (socket, conversationId, messageText, currentUsers) =>
         }
     } catch (err) {
         console.log(err);
+        socket.emit(
+            actions.sendMessageError,
+            { error: 'Error whilst sending message' }
+        );
     }
 };
 
