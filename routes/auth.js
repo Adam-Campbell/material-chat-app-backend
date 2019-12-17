@@ -87,4 +87,17 @@ router.get('/sign-out', async (req, res, next) => {
     });
 });
 
+router.post('/check-username', async (req, res, next) => {
+    const { username } = req.body;
+    try {
+        if (!username) {
+            return res.status(400).json({ error: 'Must supply a username to check' });
+        }
+        const existingUser = await User.findOne({ username });
+        return res.json({ isAvailable: !Boolean(existingUser) });
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;
