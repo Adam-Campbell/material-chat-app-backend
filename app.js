@@ -9,7 +9,6 @@ const mongoSessionStore = require('connect-mongo');
 const MongoStore = mongoSessionStore(session);
 const socketIO = require('socket.io');
 const socketioJwt = require('socketio-jwt');
-const config = require('./config');
 const {
     getCurrentUsersConversations,
     getConversation,
@@ -33,7 +32,7 @@ const io = socketIO(server);
 const currentUsers = new Map();
 
 io.sockets.on('connection', socketioJwt.authorize({
-    secret: config.socketAuthSecret,
+    secret: process.env.SOCKET_AUTH_SECRET,
     timeout: 15000
 }))
 .on('authenticated', socket => {
@@ -69,11 +68,11 @@ io.on('connection', socket => {
 });
 
 mongoose.connect(
-    config.dbUrl,
+    process.env.REMOTE_DB_URL,
     { useNewUrlParser: true }
 );
 
-app.use(cors({ origin: config.clientDomain, credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_DOMAIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -81,7 +80,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.options('*', cors());
 
 app.use(session({
-    secret: config.sessionStoreSecret,
+    secret: process.env.SESSION_STORE_SECRET,
     resave: false,
     saveUninitialized: false,
     maxAge: new Date(Date.now() + 900000),
@@ -93,4 +92,4 @@ app.use('/conversations', conversationsRouter);
 app.use('/me', meRouter);
 app.use('/users', usersRouter);
 
-server.listen(config.port, () => console.log(`App is running on port ${config.port}`));
+server.listen(process.env.PORT, () => console.log(`App is running on port ${process.env.PORT}`));

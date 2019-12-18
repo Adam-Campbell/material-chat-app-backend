@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
-const config = require('../config');
 
-const createSocketToken = _id => jwt.sign({ _id }, config.socketAuthSecret, { expiresIn: 360 });
+const createSocketToken = _id => jwt.sign({ _id }, process.env.SOCKET_AUTH_SECRET, { expiresIn: 360 });
 
 router.get('/check-for-session', async (req, res, next) => {
     const { currentUserId } = req.session;
